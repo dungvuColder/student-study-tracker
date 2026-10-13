@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ thống Quản lý và Theo dõi Học tập Sinh viên</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/custom.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <!-- TOP HEADER / NAVBAR -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-8 py-3.5 transition-all">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center text-xl shadow-md shadow-indigo-100">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+            StudyTracker <span class="text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">SPA v1.0</span>
+          </h1>
+          <p class="text-xs text-slate-600">Quản lý & Theo dõi Tiến độ Học tập Sinh viên</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs & Actions -->
+      <div class="flex items-center gap-3 self-end md:self-auto">
+        <nav class="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+          <button id="nav-btn-dashboard" onclick="window.app.switchTab('dashboard')" class="px-3.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 font-bold transition">
+            <i class="fa-solid fa-gauge mr-1.5"></i> Bảng điều khiển
+          </button>
+          <button id="nav-btn-docs" onclick="window.app.switchTab('docs')" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">
+            <i class="fa-solid fa-folder mr-1.5"></i> Kho Tài liệu
+          </button>
+        </nav>
+
+        <button onclick="window.app.openCourseModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm shadow-indigo-200 transition">
+          <i class="fa-solid fa-plus"></i>
+          <span>Thêm Môn Học</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6">
+
+    <!-- KPI STATS CARDS -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      
+      <!-- Card 1: Số môn học -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shrink-0">
+          <i class="fa-solid fa-book-bookmark"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-black text-slate-800" id="stat-total-courses">0</div>
+          <div class="text-xs font-medium text-slate-600">Môn Đang Học</div>
+        </div>
+      </div>
+
+      <!-- Card 2: Tín chỉ -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+          <i class="fa-solid fa-award"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-black text-slate-800" id="stat-total-credits">0</div>
+          <div class="text-xs font-medium text-slate-600">Tổng Số Tín Chỉ</div>
+        </div>
+      </div>
+
+      <!-- Card 3: Tiến độ tổng thể -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs font-medium text-slate-600">Tiến Độ Chung</div>
+          <div class="text-sm font-black text-indigo-600" id="stat-overall-progress">0%</div>
+        </div>
+        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+          <div id="stat-overall-progressbar" class="bg-gradient-to-r from-indigo-500 to-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+        <div class="text-[11px] text-slate-600 mt-1.5 flex items-center justify-between">
+          <span>Tính trên tổng số bài tập</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Việc cần làm hôm nay -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
+          <i class="fa-solid fa-list-check"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-black text-slate-800" id="stat-pending-todos">0</div>
+          <div class="text-xs font-medium text-slate-600">Việc Cần Xong Trong Ngày</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 1: BẢNG ĐIỀU KHIỂN & MÔN HỌC -->
+    <div id="tab-view-dashboard" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- CỘT TRÁI (2/3): DANH SÁCH MÔN HỌC -->
+      <div class="lg:col-span-2 space-y-4">
+        
+        <!-- Filter & Search Toolbar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div class="relative w-full sm:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="search-courses" placeholder="Tìm theo tên môn, mã môn, GV..." class="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-500 transition">
+          </div>
+          <div class="flex items-center gap-2 self-end sm:self-auto text-xs text-slate-600">
+            <span>Hiển thị tất cả môn học của học kỳ này</span>
+          </div>
+        </div>
+
+        <!-- Course Cards Grid -->
+        <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Render tự động bởi UI.renderCoursesList() -->
+        </div>
+
+      </div>
+
+      <!-- CỘT PHẢI (1/3): WIDGET TO-DO LIST TOÀN CỤC & TIỆN ÍCH -->
+      <div class="space-y-6">
+
+        <!-- Widget: To-do List Toàn Cục (Daily Quick Tasks) -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-clipboard-list"></i>
+              </div>
+              <h2 class="text-sm font-bold text-slate-800">Ghi Chú & Việc Trong Ngày</h2>
+            </div>
+            <span id="global-todos-count" class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+              0 việc
+            </span>
+          </div>
+
+          <!-- Form thêm nhanh To-do -->
+          <form id="global-todo-form" class="flex flex-col gap-2 mb-4">
+            <div class="flex gap-2">
+              <input type="text" id="global-todo-input" placeholder="Thêm việc cần làm nhanh..." class="flex-1 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 transition" required>
+              <select id="global-todo-priority" class="px-2 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-600 font-medium">
+                <option value="medium">Vừa</option>
+                <option value="high">Gấp</option>
+                <option value="low">Thấp</option>
+              </select>
+            </div>
+            <button type="submit" class="w-full py-2 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-plus text-[10px]"></i> Thêm vào việc cần làm
+            </button>
+          </form>
+
+          <!-- Danh sách To-do Items -->
+          <div id="global-todos-list" class="space-y-1 max-h-[360px] overflow-y-auto pr-1">
+            <!-- Render tự động bởi UI.renderGlobalTodos() -->
+          </div>
+        </div>
+
+        <!-- Widget: Lưu ý & Hướng dẫn học tập -->
+        <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-2xl p-5 shadow-md">
+          <div class="flex items-center gap-2 text-indigo-300 text-xs font-bold uppercase tracking-wider mb-2">
+            <i class="fa-solid fa-lightbulb"></i> Mẹo học tập
+          </div>
+          <h3 class="text-sm font-bold leading-snug">Chia nhỏ đồ án để hoàn thành đúng hạn</h3>
+          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+            Thêm từng đầu việc cụ thể trong từng môn học để hệ thống tự động tính toán thanh tiến độ phần trăm % chính xác nhất.
+          </p>
+          <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Lưu trữ: LocalStorage + IndexedDB</span>
+            <span class="text-emerald-400 font-medium"><i class="fa-solid fa-shield-check mr-1"></i>Offline Ready</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- TAB 2: KHO TÀI LIỆU TỔNG HỢP (ALL DOCUMENTS) -->
+    <div id="tab-view-docs" class="hidden">
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Kho Tài Liệu Học Tập Ngoại Tuyến</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Tất cả tài liệu đã tải lên được mã hóa và lưu trực tiếp trong IndexedDB trên máy của bạn.</p>
+          </div>
+          <span id="all-docs-count" class="text-xs font-bold px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700">0 tệp</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-400 font-bold bg-slate-50/50">
+                <th class="py-3 px-4">Tên tài liệu</th>
+                <th class="py-3 px-4">Môn học</th>
+                <th class="py-3 px-4">Dung lượng</th>
+                <th class="py-3 px-4">Ngày tải lên</th>
+                <th class="py-3 px-4 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="all-docs-tbody">
+              <!-- Render tự động -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- 1. MODAL THÊM / SỬA MÔN HỌC -->
+  <div id="course-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="modal-enter bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 id="course-modal-title" class="text-base font-bold text-slate-900">Thêm Môn Học Mới</h3>
+        <button onclick="window.app.closeCourseModal()" class="text-slate-400 hover:text-slate-600 w-8 h-8 rounded-lg flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <form id="course-form" class="p-6 space-y-4">
+        <div class="grid grid-cols-3 gap-3">
+          <div class="col-span-1">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Mã môn</label>
+            <input type="text" id="course-code" placeholder="VD: CS101" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 uppercase font-semibold">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Tên môn học <span class="text-rose-500">*</span></label>
+            <input type="text" id="course-name" placeholder="VD: Trí tuệ Nhân tạo" required class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Số tín chỉ</label>
+            <input type="number" id="course-credits" min="1" max="10" value="3" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 font-semibold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Màu sắc thẻ</label>
+            <select id="course-color" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500">
+              <option value="indigo">Chàm (Indigo)</option>
+              <option value="emerald">Xanh lục (Emerald)</option>
+              <option value="amber">Hổ phách (Amber)</option>
+              <option value="rose">Hồng đào (Rose)</option>
+              <option value="blue">Xanh dương (Blue)</option>
+              <option value="purple">Tím (Purple)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Tổng số tuần học</label>
+            <input type="number" id="course-total-weeks" min="1" max="50" value="15" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 font-semibold" placeholder="15">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Tuần học hiện tại</label>
+            <input type="number" id="course-current-week" min="1" max="50" value="1" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 font-semibold" placeholder="1">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Giảng viên giảng dạy</label>
+          <input type="text" id="course-lecturer" placeholder="VD: TS. Nguyễn Văn A" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Ghi chú chung</label>
+          <textarea id="course-notes" rows="3" placeholder="Lịch học, phòng học, hình thức thi..." class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2">
+          <button type="button" onclick="window.app.closeCourseModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+            Hủy
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm transition">
+            Lưu Môn Học
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. MODAL CHI TIẾT MÔN HỌC (BÀI TẬP & TÀI LIỆU) -->
+  <div id="course-detail-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-3 lg:p-6">
+    <div class="modal-enter bg-white w-full max-w-4xl max-h-[92vh] rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-start justify-between">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span id="detail-modal-code" class="px-2 py-0.5 rounded text-xs font-bold bg-indigo-100 text-indigo-700">CODE</span>
+            <span id="detail-modal-credits" class="text-xs font-semibold text-slate-500">3 Tín chỉ</span>
+          </div>
+          <h2 id="detail-modal-title" class="text-xl font-black text-slate-900">Tên môn học</h2>
+          <div class="text-xs text-slate-500 flex items-center gap-3 mt-1">
+            <span><i class="fa-solid fa-chalkboard-user text-slate-400 mr-1"></i> <span id="detail-modal-lecturer">Giảng viên</span></span>
+            <span>•</span>
+            <span id="detail-modal-notes" class="truncate max-w-md text-slate-400">Ghi chú môn học</span>
+          </div>
+        </div>
+        <button onclick="window.app.closeCourseDetailModal()" class="text-slate-400 hover:text-slate-600 w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-sm border border-slate-200 transition">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Hai thanh tiến độ: Thời gian tuần học & Bài tập -->
+      <div class="px-6 py-4 bg-white border-b border-slate-100 space-y-3">
+        <!-- 1. Thanh tiến trình thời gian tuần học -->
+        <div>
+          <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+            <span class="text-slate-700 flex items-center gap-1.5">
+              <i class="fa-regular fa-calendar-check text-blue-600"></i> Thời gian môn học:
+            </span>
+            <div class="flex items-center gap-2">
+              <span id="detail-modal-week-text" class="text-blue-700 font-extrabold">Tuần 1/15 (Còn 14 tuần)</span>
+              <div class="flex items-center gap-1 ml-1">
+                <button onclick="window.app.stepCurrentDetailWeek(-1)" title="Lùi 1 tuần" class="w-5 h-5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded flex items-center justify-center font-bold text-xs">
+                  -
+                </button>
+                <button onclick="window.app.stepCurrentDetailWeek(1)" title="Tăng 1 tuần" class="w-5 h-5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded flex items-center justify-center font-bold text-xs">
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+            <div id="detail-modal-week-bar" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- 2. Thanh tiến độ hoàn thành bài tập -->
+        <div>
+          <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+            <span class="text-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-bars-progress text-emerald-600"></i> Bài tập / Đồ án đã hoàn thành:
+            </span>
+            <span id="detail-modal-progress-text" class="text-emerald-600 font-extrabold">0% Hoàn thành</span>
+          </div>
+          <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+            <div id="detail-modal-progress-bar" class="bg-emerald-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body (2 Columns: Bài tập & Tài liệu) -->
+      <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Cột 1: Việc cần làm theo môn (Course Tasks) -->
+        <div class="flex flex-col h-full">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-indigo-500"></i> Bài Tập / Đồ Án Cần Làm
+            </h3>
+          </div>
+
+          <!-- Form thêm việc theo môn -->
+          <form id="add-task-form" class="bg-slate-50 p-3 rounded-2xl border border-slate-200 mb-3 space-y-2">
+            <input type="text" id="task-title-input" placeholder="Tên bài tập, đồ án được giao..." class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500" required>
+            <div class="grid grid-cols-2 gap-2">
+              <select id="task-type-select" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700 font-medium">
+                <option value="assignment">Bài tập (Assignment)</option>
+                <option value="project">Đồ án (Project)</option>
+                <option value="reading">Đọc tài liệu</option>
+                <option value="exam">Ôn tập thi</option>
+              </select>
+              <input type="date" id="task-deadline-input" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700">
+            </div>
+            <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-plus text-xs"></i> Thêm việc cho môn học
+            </button>
+          </form>
+
+          <!-- Danh sách bài tập -->
+          <div id="course-tasks-list" class="space-y-2 flex-1 overflow-y-auto max-h-[320px] pr-1">
+            <!-- Render tự động -->
+          </div>
+        </div>
+
+        <!-- Cột 2: Quản lý Tài liệu (Documents & Upload) -->
+        <div class="flex flex-col h-full">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-folder-open text-indigo-500"></i> Tài Liệu Môn Học
+            </h3>
+          </div>
+
+          <!-- Upload Dropzone -->
+          <div id="upload-dropzone" class="border-2 border-dashed border-slate-300 rounded-2xl p-4 text-center bg-slate-50 hover:bg-indigo-50/40 hover:border-indigo-400 transition cursor-pointer mb-3 relative">
+            <input type="file" id="document-file-input" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            <i class="fa-solid fa-cloud-arrow-up text-2xl text-indigo-500 mb-1"></i>
+            <p class="text-xs font-bold text-slate-700">Kéo thả file vào đây hoặc bấm để chọn</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Hỗ trợ PDF, DOCX, PPT, Zip, Ảnh (Lưu trữ nội bộ an toàn)</p>
+          </div>
+
+          <!-- Danh sách tài liệu -->
+          <div id="course-docs-list" class="space-y-2 flex-1 overflow-y-auto max-h-[320px] pr-1">
+            <!-- Render tự động -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end">
+        <button onclick="window.app.closeCourseDetailModal()" class="px-5 py-2 text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl transition">
+          Đóng
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full"></div>
+
+  <!-- Scripts -->
+  <script src="js/db.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
